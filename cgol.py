@@ -1,3 +1,15 @@
+"""A visualization of Conway's Game of Life where cells change colors as they get older.
+
+Rules for Conway's Game of Life (from Wikipedia):
+
+    1. Any live cell with fewer than two live neighbors dies, as if by underpopulation.
+    2. Any live cell with two or three live neighbors lives on to the next generation.
+    3. Any live cell with more than three live neighbors dies, as if by overpopulation.
+    4. Any dead cell with exactly three live neighbors becomes a live cell, as if by reproduction.
+
+Author: Max Filter
+Date: 12 Jun 2020
+"""
 from PyQt5.QtWidgets import QApplication, QWidget, QSizePolicy, QFrame
 from PyQt5.QtCore import Qt, QRect, QTimer, QSize
 from PyQt5.QtGui import QBrush, QColor, QPainter
@@ -5,17 +17,21 @@ from dataclasses import dataclass
 import numpy as np
 import random as rd
 
+# ~ Game Constants ............................................................
 BACKGROUND_COLOR = 'black'
-CELL_COLORS = ['#9e0142', '#d53e4f', '#f46d43', '#fdae61', '#fee08b', '#ffffbf', '#e6f598', '#abdda4', '#66c2a5', '#3288bd', '#5e4fa2']
-N_ROWS = 50
-N_COLS = 50
+CELL_COLORS = ['#9e0142', '#d53e4f', '#f46d43', '#fdae61', '#fee08b', 
+    '#ffffbf', '#e6f598', '#abdda4', '#66c2a5', '#3288bd', '#5e4fa2']
+N_ROWS = 100
+N_COLS = 100
 GAME_WIDTH = 500
 GAME_HEIGHT = 500
 THRESHOLD = 0.5  # probability that a cell is alive at start
 PERIOD = 100  # time between updates in ms
 
+# ~ Cell ......................................................................
 @dataclass
 class Cell:
+    """A cell in the game of life. """
     alive: bool = False
     alive_next: bool = False
     age: int = -1
@@ -30,7 +46,9 @@ class Cell:
         else:
             return CELL_COLORS[self.age]
 
+# ~ Game ......................................................................
 class Game(QWidget):
+    """An instance of Conway's Game of Life. """
     def __init__(self, *args, **kwargs):
         super(Game, self).__init__(*args, **kwargs)
 
@@ -48,6 +66,7 @@ class Game(QWidget):
         self._setup_game()
         self._run_game()
 
+    # ~ PyQt helpers ----------------------------------------------------------
     def paintEvent(self, event):
         """Draws the current state of the game in the window."""
         painter = QPainter(self)
@@ -90,6 +109,7 @@ class Game(QWidget):
         """
         return QSize(GAME_WIDTH, GAME_HEIGHT)
 
+    # ~ Game Logic ------------------------------------------------------------
     def _setup_game(self):
         """Initializes array of cells to represent game."""
 
