@@ -1,11 +1,15 @@
-"""A visualization of Conway's Game of Life where cells change colors as they get older.
+"""A visualization of Conway's Game of Life using color to represent age.
 
 Rules for Conway's Game of Life (from Wikipedia):
 
-    1. Any live cell with fewer than two live neighbors dies, as if by underpopulation.
-    2. Any live cell with two or three live neighbors lives on to the next generation.
-    3. Any live cell with more than three live neighbors dies, as if by overpopulation.
-    4. Any dead cell with exactly three live neighbors becomes a live cell, as if by reproduction.
+    1.  Any live cell with fewer than two live neighbors dies, as if by 
+        underpopulation.
+    2.  Any live cell with two or three live neighbors lives on to the 
+        next generation.
+    3.  Any live cell with more than three live neighbors dies, as if by 
+        overpopulation.
+    4.  Any dead cell with exactly three live neighbors becomes a live cell, 
+        as if by reproduction.
 
 Author: Max Filter
 Date: 12 Jun 2020
@@ -23,9 +27,9 @@ CELL_COLORS = ['#9e0142', '#d53e4f', '#f46d43', '#fdae61', '#fee08b',
     '#ffffbf', '#e6f598', '#abdda4', '#66c2a5', '#3288bd', '#5e4fa2']
 N_ROWS = 100
 N_COLS = 100
-GAME_WIDTH = 500
 GAME_HEIGHT = 500
-THRESHOLD = 0.5  # probability that a cell is alive at start
+GAME_WIDTH = 500
+THRESHOLD = 0.3  # probability that a cell is alive at start
 PERIOD = 100  # time between updates in ms
 
 # ~ Cell ......................................................................
@@ -37,19 +41,20 @@ class Cell:
     age: int = -1
 
     def get_color(self):
-        """ Determines cell color based on age. """
+        """Determines cell color based on age. """
         if self.age < 0:
             return BACKGROUND_COLOR
         elif self.age >= len(CELL_COLORS):
-            # Stay at last color after reaching age
+            # Stay at last color after reaching certain age
             return CELL_COLORS[len(CELL_COLORS) - 1]
         else:
             return CELL_COLORS[self.age]
 
 # ~ Game ......................................................................
 class Game(QWidget):
-    """An instance of Conway's Game of Life. """
+    """A PyQt5 widget that plays Conway's Game of Life. """
     def __init__(self, *args, **kwargs):
+        """Inits a new Game of life and starts playing it in a new window. """
         super(Game, self).__init__(*args, **kwargs)
 
         # Set GUI attributes
@@ -68,7 +73,7 @@ class Game(QWidget):
 
     # ~ PyQt helpers ----------------------------------------------------------
     def paintEvent(self, event):
-        """Draws the current state of the game in the window."""
+        """Draws the current state of the game in the window. """
         painter = QPainter(self)
         brush = QBrush()
 
@@ -103,17 +108,20 @@ class Game(QWidget):
                     painter.fillRect(cell, brush)
 
     def sizeHint(self):
-        """Starting size of the window. 
-        
-        Used as the minimum size by setSizePolicy()
+        """Starting size of the window.
+
+        Returns:
+            The minimum size of the window to be used by setSizePolicy().
         """
         return QSize(GAME_WIDTH, GAME_HEIGHT)
 
     # ~ Game Logic ------------------------------------------------------------
     def _setup_game(self):
-        """Initializes array of cells to represent game."""
-
-        rd.seed() # use in case you want to keep using the same values
+        """Initializes an array of cells to represent game.
+        
+        Each cell has a probability given by the threshold of starting alive.
+        The next state of the game is also calculated before the game starts.
+        """
 
         for i in range(N_ROWS):
             for j in range(N_COLS):
@@ -126,7 +134,7 @@ class Game(QWidget):
         self._get_next_state()
 
     def _run_game(self):
-        """Refreshes the current game state after a given time period. """
+        """A 'loop' that continues to update the game after each interval. """
         self._timer.setInterval(PERIOD)
         self._timer.timeout.connect(self._update_game)
         self._timer.start()
@@ -155,7 +163,15 @@ class Game(QWidget):
                 self._cells[i][j].alive_next = (nb == 3 or (nb == 2 and self._cells[i][j].alive))
 
     def _count_live_neighbors(self, row, col):
-        """Counts the number of live neighbors for the cell at given position. """
+        """Counts the number of live neighbors for the cell at given position.
+        
+        Args:
+            row:  The cell's row
+            col:  The cell's column
+
+        Returns:
+            The number of live neighbors for a cell at the given position. If the cell is on an edge, only neighbors within the grid are counted.
+        """
         sum = 0
         for i in range(row - 1, row + 2):
             for j in range(col - 1, col + 2):
