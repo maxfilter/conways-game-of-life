@@ -1,6 +1,6 @@
 # Conway's Game of Life
 
-This repository contains a visualization of Conway's Game of Life which uses color to represent age. The window is a PyQt5 widget.
+This repository contains a visualization of Conway's Game of Life, using color to show age. The window is a PyQt5 widget.
 
 **Python Dependencies:** `PyQt5` `numpy` `random`
 
