@@ -3,6 +3,7 @@ from PyQt5.QtCore import Qt, QRect, QTimer, QSize
 from PyQt5.QtGui import QBrush, QColor, QPainter
 from dataclasses import dataclass
 import numpy as np
+import random as rd
 
 BACKGROUND_COLOR = 'black'
 CELL_COLOR = 'white'
@@ -10,10 +11,12 @@ N_ROWS = 50
 N_COLS = 50
 GAME_WIDTH = 500
 GAME_HEIGHT = 500
+THRESHOLD = 0.5
+PERIOD = 100 # time between updates in ms
 
 @dataclass
 class Cell:
-    alive: bool = True
+    alive: bool = False
     alive_next: bool = False
 
 class Game(QWidget):
@@ -28,13 +31,11 @@ class Game(QWidget):
         )
 
         # initialize game
-        self._cells = self._init_cells()
-
-        # run game
         self._timer = QTimer()
-        self._timer.setInterval(1000) # time between updates in ms
-        self._timer.timeout.connect(self.update_state)
-        self._timer.start()
+        self._cells = np.zeros((N_ROWS, N_COLS), Cell) # init cell grid
+
+        self._setup_game()
+        self._run_game()
 
     def paintEvent(self, event):
         """Draws the current state of the game in the window."""
@@ -72,19 +73,68 @@ class Game(QWidget):
         """
         return QSize(GAME_WIDTH, GAME_HEIGHT)
 
-    @staticmethod
-    def _init_cells():
-        """Initializes array of cells to represent the game."""
-        cells = np.zeros((N_ROWS, N_COLS), Cell)
+    def _setup_game(self):
+        """Initializes array of cells to represent game."""
+
+        rd.seed() # use in case you want to keep using the same values
+
         for i in range(N_ROWS):
             for j in range(N_COLS):
-                cells[i][j] = Cell()
+                self._cells[i][j] = Cell()
+                self._cells[i][j].alive = rd.random() < THRESHOLD
 
-        return cells
+        self._get_next_state()
 
-    def update_state(self):
-        self._cells[1][1].alive = not self._cells[1][1].alive
+    def _run_game(self):
+        """ Updates the game after the given time period. """
+        self._timer.setInterval(PERIOD)
+        self._timer.timeout.connect(self._update_game)
+        self._timer.start()
+
+    def _update_game(self):
+        for i in range(N_ROWS):
+            for j in range(N_COLS):
+                # update current state to next state
+                self._cells[i][j].alive = self._cells[i][j].alive_next
+
+        # calculate new next state
+        self._get_next_state()
         self.update()
+
+    def _get_next_state(self):
+        for i in range(N_ROWS):
+            for j in range(N_COLS):
+                nb = self._count_live_neighbors(i, j)
+
+                if self._cells[i][j].alive:
+                    if nb < 2:
+                        # dies of underpopulation
+                        self._cells[i][j].alive_next = False
+                    elif nb < 4:
+                        # lives on to next generation
+                        self._cells[i][j].alive_next = True
+                    else:
+                        # dies of overpopulation
+                        self._cells[i][j].alive_next = False
+                else:
+                    if nb == 3:
+                        # lives by reproduction
+                        self._cells[i][j].alive_next = True
+                    else:
+                        # remains dead
+                        self._cells[i][j].alive_next = False  
+
+    def _count_live_neighbors(self, row, col):
+        """Counts the number of lives neighbors for the cell at given position. """
+
+        sum = 0
+        for i in range(row - 1, row + 2):
+            for j in range(col - 1, col + 2):
+                # only count cells that are in bounds and don't count yourself
+                if (i >= 0 and i < N_ROWS) and (j >= 0 and j < N_COLS) and not (i == row and j == col):
+                    sum += self._cells[i][j].alive
+
+        return sum
 
 def main():
     app = QApplication([])
