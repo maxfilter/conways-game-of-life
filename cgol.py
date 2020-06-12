@@ -19,7 +19,7 @@ from PyQt5.QtCore import Qt, QRect, QTimer, QSize
 from PyQt5.QtGui import QBrush, QColor, QPainter
 from dataclasses import dataclass
 import numpy as np
-import random as rd
+from random import random
 
 # ~ Game Constants ............................................................
 BACKGROUND_COLOR = 'black'
@@ -127,7 +127,7 @@ class Game(QWidget):
             for j in range(N_COLS):
                 self._cells[i][j] = Cell()
 
-                if rd.random() < THRESHOLD:
+                if random() < THRESHOLD:
                     self._cells[i][j].alive = True
                     self._cells[i][j].age += 1
 
